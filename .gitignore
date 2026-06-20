@@ -1,0 +1,21 @@
+# Local deploy script (contains machine-specific destination path)
+deploy.ps1
+
+# Generated outputs
+plans_latest.csv
+plans_*.html
+plans_*.json
+
+# EFL cache (re-downloaded on first run)
+efls_cache/
+
+# LLM model (~4.7 GB, auto-downloaded on first run)
+models/
+
+# Golden file and backups (built locally via golden_build_adversarial.js)
+_golden/golden_plans*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo

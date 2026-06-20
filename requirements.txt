@@ -1,0 +1,22 @@
+requests>=2.32
+truststore>=0.10
+pdfplumber>=0.11
+tabulate>=0.9
+playwright>=1.60
+playwright-stealth>=2.0
+
+# After installing, download the Chromium browser (one-time, ~300 MB):
+#   py -3.12 -m playwright install chromium
+
+# CUDA runtime DLLs (required for GPU; safe to install even on CPU-only machines):
+nvidia-cuda-runtime-cu12
+nvidia-cublas-cu12
+nvidia-cusparse-cu12
+nvidia-curand-cu12
+nvidia-cufft-cu12
+
+# CPU-only llama-cpp-python (default):
+#   py -3.12 -m pip install llama-cpp-python
+#
+# GPU (CUDA 12.x) -- install this instead for full GPU acceleration:
+#   py -3.12 -m pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124
