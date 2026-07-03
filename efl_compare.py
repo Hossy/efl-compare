@@ -2300,9 +2300,9 @@ def _write_html(results, tdu, zip_code, out_path=None):
         body += (
             f'<tr id="{gid}-hdr" class="grp-hdr" data-state="all" '
             f'onclick="toggleGroup(\'{gid}\')">'
-            f'<td colspan="{n_cols}" style="padding:6px 10px">'
+            f'<td class="grp-hdr-freeze" colspan="3" style="padding:6px 10px">'
             f'<span id="{gid}-arrow">&#9660;</span>&nbsp;{term}-Month Plans'
-            f'</td></tr>\n'
+            f'</td><td colspan="{n_cols - 3}"></td></tr>\n'
             f'<tbody id="{gid}">\n{rows}</tbody>\n'
         )
 
@@ -2424,11 +2424,27 @@ def _write_html(results, tdu, zip_code, out_path=None):
   tr.src-llm {{ background: var(--row-llm); }}
   tr.src-api {{ background: var(--row-api); }}
   tr:hover td {{ background-color: var(--hover); }}
+  /* ── Frozen columns (fav icon / Provider / Plan) on horizontal scroll ── */
+  tr:not(.grp-hdr) > td:nth-child(1), th:nth-child(1) {{ position: sticky; z-index: 2; }}
+  tr:not(.grp-hdr) > td:nth-child(2), th:nth-child(2) {{ position: sticky; z-index: 2; }}
+  tr:not(.grp-hdr) > td:nth-child(3), th:nth-child(3) {{ position: sticky; z-index: 2; box-shadow: 3px 0 6px rgba(0,0,0,0.3); }}
+  th:nth-child(1), th:nth-child(2), th:nth-child(3) {{ z-index: 3; }}
+  td:nth-child(1), td:nth-child(2), td:nth-child(3) {{ background: var(--surface); }}
+  tr.src-efl td:nth-child(1), tr.src-efl td:nth-child(2), tr.src-efl td:nth-child(3) {{ background: var(--row-efl); }}
+  tr.src-llm td:nth-child(1), tr.src-llm td:nth-child(2), tr.src-llm td:nth-child(3) {{ background: var(--row-llm); }}
+  tr.src-api td:nth-child(1), tr.src-api td:nth-child(2), tr.src-api td:nth-child(3) {{ background: var(--row-api); }}
+  /* Frozen cells must never get a translucent background-color on hover --
+     they're sticky, so a translucent bg lets whatever scrolled underneath
+     bleed through. Use an opaque inset box-shadow layered on top instead. */
+  tr:not(.grp-hdr):hover td:nth-child(1), tr:not(.grp-hdr):hover td:nth-child(2) {{ box-shadow: inset 0 0 0 999px var(--hover); }}
+  tr:not(.grp-hdr):hover td:nth-child(3) {{ box-shadow: inset 0 0 0 999px var(--hover), 3px 0 6px rgba(0,0,0,0.3); }}
+  .grp-hdr-freeze {{ position: sticky; z-index: 2; box-shadow: 3px 0 6px rgba(0,0,0,0.3); }}
   a {{ color: var(--link); text-decoration: none; }}
   a:hover {{ text-decoration: underline; }}
-  .grp-hdr {{ background: var(--grp-bg) !important; color: var(--grp-text) !important;
-              font-weight: bold; cursor: pointer; user-select: none; }}
-  .grp-hdr:hover td {{ background-color: rgba(255,255,255,0.12) !important; }}
+  .grp-hdr {{ font-weight: bold; cursor: pointer; user-select: none; }}
+  .grp-hdr td {{ background: var(--grp-bg) !important; color: var(--grp-text) !important; }}
+  .grp-hdr:hover td {{ box-shadow: inset 0 0 0 999px rgba(255,255,255,0.12) !important; }}
+  .grp-hdr:hover td.grp-hdr-freeze {{ box-shadow: inset 0 0 0 999px rgba(255,255,255,0.12), 3px 0 6px rgba(0,0,0,0.3) !important; }}
   tbody.show-best .hideable {{ display: none; }}
   td.fav-btn, td.star-cell, td.current-cell, thead th:first-child {{ padding: 1px 3px; width: 30px; min-width: 30px; max-width: 30px; text-align: center; }}
   td.fav-btn {{ cursor: pointer; }}
@@ -2464,7 +2480,47 @@ def _write_html(results, tdu, zip_code, out_path=None):
   .top-card:nth-child(3) {{ border-left: 3px solid #b45309; }}
   .top-card.current-card {{ border-left: 3px solid #0d9488 !important; }}
   /* ── Current plan row ── */
-  tr.current-row {{ outline: 2px solid #0d9488; outline-offset: -2px; }}
+  /* A single `outline` on the <tr> can't be used here: the frozen columns
+     are `position: sticky`, which gives them their own elevated stacking
+     context, so their opaque backgrounds paint over an outline wherever
+     they overlap it. Using outline for columns 4+ and a per-cell box-shadow
+     patch for the 3 frozen columns (an earlier attempt) fixed the occlusion
+     but introduced a different bug: outline and box-shadow measure their
+     "edge" slightly differently under border-collapse, so the two
+     techniques' 2px stripes don't land on the exact same line and visually
+     stack into a thicker band right at the seam (columns 3/4). Fixing that
+     mismatch by nudging pixel offsets would be fragile across zoom levels/
+     browsers, so instead every cell in the row uses the SAME inset
+     box-shadow technique -- one consistent geometry, no seam. Border-stripe
+     layers are listed BEFORE the hover tint / divider shadow so they paint
+     on top of, not underneath, those wider layers. */
+  tr.current-row td {{
+    box-shadow: inset 0 2px 0 0 #0d9488, inset 0 -2px 0 0 #0d9488;
+  }}
+  tr.current-row td:first-child {{
+    box-shadow: inset 0 2px 0 0 #0d9488, inset 0 -2px 0 0 #0d9488, inset 2px 0 0 0 #0d9488;
+  }}
+  tr.current-row td:last-child {{
+    box-shadow: inset 0 2px 0 0 #0d9488, inset 0 -2px 0 0 #0d9488, inset -2px 0 0 0 #0d9488;
+  }}
+  /* Frozen column 3 keeps its divider shadow layered alongside the border. */
+  tr.current-row td:nth-child(3) {{
+    box-shadow: inset 0 2px 0 0 #0d9488, inset 0 -2px 0 0 #0d9488, 3px 0 6px rgba(0,0,0,0.3);
+  }}
+  /* Only the 3 frozen columns need a hover combo -- their base hover effect
+     is also a box-shadow (to avoid the sticky bleed-through bug), which
+     would otherwise entirely replace this border rather than coexist with
+     it. Columns 4+ hover via plain `background-color`, which already
+     coexists with box-shadow with no extra rule needed. */
+  tr.current-row:hover td:nth-child(1), tr.current-row:hover td:nth-child(2) {{
+    box-shadow: inset 0 2px 0 0 #0d9488, inset 0 -2px 0 0 #0d9488, inset 0 0 0 999px var(--hover);
+  }}
+  tr.current-row:hover td:nth-child(1) {{
+    box-shadow: inset 0 2px 0 0 #0d9488, inset 0 -2px 0 0 #0d9488, inset 2px 0 0 0 #0d9488, inset 0 0 0 999px var(--hover);
+  }}
+  tr.current-row:hover td:nth-child(3) {{
+    box-shadow: inset 0 2px 0 0 #0d9488, inset 0 -2px 0 0 #0d9488, inset 0 0 0 999px var(--hover), 3px 0 6px rgba(0,0,0,0.3);
+  }}
   /* ── VS column custom tooltip ── */
   .vs-cell {{ white-space: nowrap; cursor: default; }}
   .vs-tip {{
@@ -2557,6 +2613,14 @@ function toggleGroup(id) {{
   var gs = _loadGroupState();
   gs[id] = hdr.getAttribute('data-state');
   _saveGroupState(gs);
+
+  // Provider/Plan column widths track currently-visible content (matching
+  // the unfrozen page's behavior), so every visibility change needs an
+  // immediate recompute -- otherwise the sticky `left` offsets calculated
+  // from the OLD width go stale the instant auto-layout reflows to the NEW
+  // width, reopening the same misalignment this whole mechanism exists to
+  // prevent.
+  _applyFrozenColumnOffsets();
 }}
 
 function toggleAll() {{
@@ -2599,6 +2663,8 @@ function toggleAll() {{
     if (hdr) gs[tbody.id] = hdr.getAttribute('data-state');
   }});
   _saveGroupState(gs);
+
+  _applyFrozenColumnOffsets();
 }}
 
 function toggleHeart(td, event) {{
@@ -2622,6 +2688,10 @@ function toggleHeart(td, event) {{
     if (row.classList.contains('fav')) favs.add(pid); else favs.delete(pid);
     _saveFavorites(favs);
   }}
+
+  // Favoriting/unfavoriting can change which rows show in "best" mode, which
+  // can change the widest currently-visible Plan/Provider text.
+  _applyFrozenColumnOffsets();
 }}
 
 // Mark hideable rows once on load so toggles use fast class lookup, then
@@ -2673,6 +2743,91 @@ document.addEventListener('DOMContentLoaded', function() {{
     // 'all' is already the default rendered state -- nothing to do.
   }});
   _saveGroupState(prunedGroupState);
+}});
+
+// Frozen columns (fav icon / Provider / Plan): every cell in a table column
+// already renders at the same width as the widest CURRENTLY VISIBLE content
+// in that column, so measure the actual rendered width instead of guessing a
+// fixed size and truncating content to fit it -- no plan/provider name gets
+// clipped, and the columns keep narrowing/widening with visible content
+// exactly like the unfrozen page does. Measured from the <thead> cells, not
+// a <tbody> row, because thead is never hidden by a toggle (a data row would
+// read as zero-width whenever every group is collapsed to "hidden").
+// Recomputed on load, on resize, AND after every toggle/favorite interaction
+// (see toggleGroup/toggleAll/toggleHeart) -- any of those can change the
+// widest visible Plan/Provider text, and a stale cached offset the instant
+// after is exactly the gap/overlap bug this mechanism exists to prevent.
+function _applyFrozenColumnOffsets() {{
+  var th1 = document.querySelector('thead th:nth-child(1)');
+  var th2 = document.querySelector('thead th:nth-child(2)');
+  var th3 = document.querySelector('thead th:nth-child(3)');
+  if (!th1 || !th2 || !th3) return;
+
+  // Remove any previous override FIRST so every recompute measures the true
+  // natural (current) layout, not a size this same function already set --
+  // reusing a prior run's OUTPUT as this run's INPUT would compound.
+  var old = document.getElementById('_frozen-col-style');
+  if (old) old.remove();
+  // Removing the previous override just above also removes col1's `left: 0`
+  // sticky pin, so if the page is currently scrolled, col1 momentarily falls
+  // back to its natural (scrolled-out-of-view) position -- reading its rect
+  // now would give a garbage/negative offset. Force scroll to 0 for the
+  // measurement and restore it after, so recomputes are correct regardless
+  // of scroll position (e.g. a resize that fires while scrolled right).
+  var savedScroll = document.documentElement.scrollLeft;
+  document.documentElement.scrollLeft = 0;
+  // col1 doesn't naturally start at viewport x=0 (e.g. body padding) --
+  // sticking it at its natural offset left a scroll-exposed sliver between
+  // the true viewport edge and the frozen zone, since a <tr>'s own
+  // background isn't sticky and slides left under that sliver on scroll.
+  // Fix: stick col1 flush at 0 so its opaque background covers that sliver
+  // too. The group-header label cell is left-aligned text, so padding-left
+  // is fine there. The icon column is centered content though -- padding
+  // only on the left would push the icon visibly off-center, so widen that
+  // cell symmetrically instead and let centering do the rest.
+  var pageInset = th1.getBoundingClientRect().left;
+  // getBoundingClientRect() is the BORDER-BOX (full visual) width -- the
+  // number `left` offsets actually need, since that's what determines where
+  // the next column visually begins. getComputedStyle().width, by contrast,
+  // is the CONTENT-box width under the default box-sizing (excludes padding
+  // + border) -- using that for `left` arithmetic previously undercounted
+  // each column by its own padding+border, staggering all 3 columns'
+  // effective sticky thresholds and leaving them permanently misaligned
+  // once activated (each columns's error compounds into the next). Forcing
+  // box-sizing: border-box below makes the `width` we set equal to this
+  // same border-box number, so measuring and setting use one consistent
+  // meaning of "width" throughout, with no content/border-box mismatch.
+  var iconColWidth = Math.ceil(th1.getBoundingClientRect().width + pageInset);
+  var col2Width = Math.ceil(th2.getBoundingClientRect().width);
+  var col3Width = Math.ceil(th3.getBoundingClientRect().width);
+  var style = document.createElement('style');
+  style.id = '_frozen-col-style';
+  style.textContent =
+    '.grp-hdr-freeze {{ padding-left: ' + pageInset + 'px !important; }}' +
+    'td:nth-child(1), th:nth-child(1), td:nth-child(2), th:nth-child(2), td:nth-child(3), th:nth-child(3) {{ box-sizing: border-box !important; }}' +
+    'td:nth-child(1), th:nth-child(1) {{ width: ' + iconColWidth + 'px !important; min-width: ' + iconColWidth + 'px !important; max-width: ' + iconColWidth + 'px !important; }}' +
+    'td:nth-child(2), th:nth-child(2) {{ width: ' + col2Width + 'px !important; min-width: ' + col2Width + 'px !important; max-width: ' + col2Width + 'px !important; }}' +
+    'td:nth-child(3), th:nth-child(3) {{ width: ' + col3Width + 'px !important; min-width: ' + col3Width + 'px !important; max-width: ' + col3Width + 'px !important; }}';
+  document.head.appendChild(style);
+
+  // Compute left offsets by pure arithmetic on the same whole-pixel,
+  // border-box widths just set, rather than re-measuring rendered rects --
+  // re-measuring would reintroduce a dependency on the browser's own
+  // (possibly still fractional, still independently-snapped) rendering.
+  var col2Left = iconColWidth;
+  var col3Left = col2Left + col2Width;
+  style.textContent +=
+    'td:nth-child(1), th:nth-child(1), .grp-hdr-freeze {{ left: 0; }}' +
+    'td:nth-child(2), th:nth-child(2) {{ left: ' + col2Left + 'px; }}' +
+    'td:nth-child(3), th:nth-child(3) {{ left: ' + col3Left + 'px; }}';
+
+  document.documentElement.scrollLeft = savedScroll;
+}}
+document.addEventListener('DOMContentLoaded', _applyFrozenColumnOffsets);
+var _frozenColResizeTimer;
+window.addEventListener('resize', function() {{
+  clearTimeout(_frozenColResizeTimer);
+  _frozenColResizeTimer = setTimeout(_applyFrozenColumnOffsets, 150);
 }});
 
 // VS column tooltip — anchored above the cell
