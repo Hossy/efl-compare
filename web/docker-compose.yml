@@ -1,0 +1,75 @@
+# Self-contained deployment for the EFL Compare web front-end.
+#
+#   docker compose up -d          # start web server + cloudflare tunnel
+#   docker compose logs -f        # watch logs
+#   docker compose down           # stop
+#
+# Two services:
+#   web         - the stdlib Python server (serve.py), no third-party deps.
+#                 Published to 127.0.0.1:8090 on the host (local only) and also
+#                 reachable as http://web:8090 inside the compose network.
+#   cloudflared - Cloudflare Tunnel connector. Reads CLOUDFLARE_TOKEN from
+#                 ./.env (git-ignored). The public-hostname -> service mapping
+#                 is configured in the Cloudflare Zero Trust dashboard for this
+#                 tunnel; point it at:  http://web:8090
+#
+# Port 8090 is chosen because 4000, 8080 and 8000 are already used by other
+# containers on this host.
+
+services:
+  web:
+    # Built from ./Dockerfile: the stock python image has no PyMuPDF/openai, so
+    # POST /api/parse-bill (reading a user's bill PDF) would 503 without them.
+    build:
+      context: .
+    container_name: efl-web
+    working_dir: /app
+    # Mount the whole repo read-only so serve.py finds ../plans_latest.json
+    # exactly as it would when run directly (HERE.parent / plans_latest.json).
+    volumes:
+      - ../:/app:ro
+    # --reload: re-exec on .py changes. The repo is mounted, so edits on the host
+    # take effect without `docker compose restart`. Without it the container keeps
+    # serving whatever code it started with.
+    command: >
+      python3 web/serve.py --host 0.0.0.0 --port 8090 --reload
+    # .env points the LLM at 127.0.0.1, which inside a container means the
+    # container itself. Map the host gateway and override the base URL so the
+    # bill reader reaches the LLM server running on the host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - EFL_LLM_BASE_URL=${EFL_LLM_BASE_URL_DOCKER:-http://host.docker.internal:8080/v1}
+      # Abuse controls for /api/parse-bill, which spends real GPU time and is
+      # published to the internet by the tunnel below. Override any of these in
+      # ./.env. See ratelimit.py.
+      #
+      # EFL_TRUST_PROXY is safe to enable *here specifically*: the only public
+      # route in is Cloudflare's edge, which overwrites CF-Connecting-IP and so
+      # cannot pass a forged one, and port 8090 is published to 127.0.0.1 only.
+      # Without it every visitor would share the tunnel's IP -- one bucket for
+      # the whole internet, and one abuser locks everybody out.
+      - EFL_TRUST_PROXY=${EFL_TRUST_PROXY:-1}
+      - EFL_RATE_PER_HOUR=${EFL_RATE_PER_HOUR:-12}
+      - EFL_RATE_BURST=${EFL_RATE_BURST:-4}
+      - EFL_MAX_CONCURRENT=${EFL_MAX_CONCURRENT:-2}
+      # Unset by default: a key in a public page's JS is not a secret. Set it to
+      # close the endpoint for private/programmatic use. For real public auth,
+      # put Cloudflare Access in front of the tunnel instead.
+      - EFL_API_TOKEN=${EFL_API_TOKEN:-}
+    # Local-only publish; public access goes through the tunnel, not this port.
+    ports:
+      - "127.0.0.1:8090:8090"
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: efl-cloudflared
+    command: tunnel --no-autoupdate run
+    # CLOUDFLARE_TOKEN is interpolated from ./.env by Docker Compose.
+    # The cloudflared image expects it under the name TUNNEL_TOKEN.
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TOKEN:?Set CLOUDFLARE_TOKEN in web/.env}
+    depends_on:
+      - web
+    restart: unless-stopped

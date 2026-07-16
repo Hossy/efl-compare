@@ -1,0 +1,22 @@
+# Secrets — the Cloudflare Tunnel token and the LLM endpoint config.
+.env
+
+# Uploaded bills. Real bills carry names, addresses and account numbers —
+# never commit them.
+uploads/
+
+# Generated output from this folder's own efl_compare.py
+plans_latest.json
+plans_*.json
+
+# Design sources dropped in by hand (prototype exports, zips). The system they
+# feed is captured in STYLE.md and static/theme.css, which are committed.
+.tmp/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# EFL cache — symlinked to the parent's, so the fork reuses the same downloads
+# instead of re-fetching 121 PDFs. Generated data, never committed.
+efls_cache

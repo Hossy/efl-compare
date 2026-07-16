@@ -1,0 +1,16 @@
+# The web/ folder is a self-contained fork of the EFL comparator: it runs the
+# full pipeline (its own efl_compare.py) AND serves the result. Unlike the
+# original, LLM work is delegated to any OpenAI-compatible endpoint via .env,
+# so there is no llama-cpp/CUDA build and no local model download.
+
+requests>=2.32
+truststore>=0.10
+PyMuPDF>=1.24          # imported as `fitz` — primary EFL PDF parser
+pdfplumber>=0.11       # kept only for the TDU-rate fallback path
+tabulate>=0.9          # --text-table only
+playwright>=1.60
+playwright-stealth>=2.0
+openai>=1.40           # LLM via any OpenAI-compatible endpoint (see .env.example)
+
+# After installing, download the Chromium browser (one-time, ~300 MB):
+#   python3 -m playwright install chromium

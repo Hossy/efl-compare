@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EFL Electricity Plan Comparator</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="title-wrap">
+      <h1>EFL Electricity Plan Comparator</h1>
+      <p class="subtitle" id="subtitle">Loading…</p>
+    </div>
+    <div class="controls">
+      <a class="btn" href="/" title="Back to the guided plan picker">&larr; Back to the wizard</a>
+      <label class="ctl">
+        <span>Usage</span>
+        <select id="tier-select" aria-label="Compare usage tier"></select>
+      </label>
+      <button id="theme-toggle" class="btn" type="button" aria-label="Toggle theme">☀ Light</button>
+    </div>
+  </header>
+
+  <section id="banner" class="banner" hidden></section>
+
+  <section class="toolbar">
+    <input id="search" class="search" type="search" placeholder="Filter by provider or plan…" aria-label="Filter plans">
+    <label class="chk"><input type="checkbox" id="hide-credit"> Hide bill-credit plans</label>
+    <label class="chk"><input type="checkbox" id="only-fav"> Favorites only</label>
+    <span class="count" id="count"></span>
+  </section>
+
+  <main id="content" class="content"></main>
+
+  <footer class="foot">
+    <span id="source-note"></span>
+    <span class="legend">
+      <span class="badge src-efl">EFL</span> legal doc ·
+      <span class="badge src-llm">LLM</span> AI-extracted ·
+      <span class="badge src-api">API</span> CSV estimate ·
+      <span class="badge b-credit">¢</span> bill credit ·
+      <span class="badge b-manual">M</span> manual ·
+      <span class="badge b-current">CURRENT</span> your plan
+    </span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

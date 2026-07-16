@@ -1,5 +1,6 @@
 requests>=2.32
 truststore>=0.10
+PyMuPDF>=1.24          # imported as `fitz` -- primary EFL PDF parser
 pdfplumber>=0.11
 tabulate>=0.9
 playwright>=1.60

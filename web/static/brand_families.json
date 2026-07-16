@@ -1,0 +1,47 @@
+{
+  "_comment": [
+    "Texas REP brand ownership. Many 'competing' plans on Power to Choose are the",
+    "same company under different brand names -- a shopper comparing the top three",
+    "results can be looking at one company three times without being told.",
+    "",
+    "Only families with two or more brands are listed: a single-brand parent adds",
+    "nothing on screen. Names must match the PUCT [RepCompany] value after",
+    "normalisation (uppercase, punctuation and LLC/LP/INC/COMPANY suffixes dropped)",
+    "-- see normProvider() in wizard.js.",
+    "",
+    "Ownership changes. Each family carries the source it was verified against and",
+    "the date, so this can be rechecked rather than trusted forever.",
+    "",
+    "Verified 2026-07-15."
+  ],
+  "families": [
+    {
+      "parent": "NRG Energy",
+      "brands": ["RELIANT", "GREEN MOUNTAIN ENERGY", "CIRRO ENERGY", "DISCOUNT POWER", "DIRECT ENERGY"],
+      "note": "NRG's Texas brands include Reliant, Green Mountain, Cirro, Discount Power and Direct Energy. Cirro and Discount Power go further and share a single PUCT certificate (#10177) -- one legal entity, two brands.",
+      "source": "https://en.wikipedia.org/wiki/NRG_Energy",
+      "verified": "2026-07-15"
+    },
+    {
+      "parent": "Vistra",
+      "brands": ["TXU ENERGY", "TRIEAGLE ENERGY", "VETERAN ENERGY", "EXPRESS ENERGY", "AMBIT ENERGY", "4CHANGE ENERGY"],
+      "note": "Vistra's Texas brands include TXU Energy, TriEagle, Express, Veteran, Ambit and 4Change -- gathered up through the Ambit and Crius acquisitions.",
+      "source": "https://www.prnewswire.com/news-releases/vistra-pledges-1-million-to-aid-customers-and-communities-impacted-by-hurricane-beryl-302197027.html",
+      "verified": "2026-07-15"
+    },
+    {
+      "parent": "Just Energy",
+      "brands": ["JUST ENERGY", "TARA ENERGY", "AMIGO ENERGY"],
+      "note": "Just Energy acquired Fulcrum Energy in 2011, bringing Amigo and Tara under the same roof.",
+      "source": "https://en.wikipedia.org/wiki/Amigo_Energy",
+      "verified": "2026-07-15"
+    },
+    {
+      "parent": "Octopus Energy",
+      "brands": ["OCTOPUS ENERGY"],
+      "note": "PUCT lists 'Octopus Energy' and 'Octopus Energy LLC' separately; they normalise to one brand.",
+      "source": "https://octopusenergy.com/",
+      "verified": "2026-07-15"
+    }
+  ]
+}

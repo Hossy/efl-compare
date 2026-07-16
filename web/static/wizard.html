@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find your cheaper electricity plan</title>
+<!-- Palette, type and shared components: static/theme.css -->
+<link rel="stylesheet" href="/static/theme.css">
+<!-- Runs before first paint: reading the saved choice after the stylesheet has
+     painted would show a flash of the wrong theme on every load. Kept inline
+     and tiny for that reason — an external file would be a blocking request. -->
+<script>
+  (function(){
+    try{
+      var t = localStorage.getItem('efl-theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    }catch(e){}   // private mode / storage disabled: fall through to auto
+  })();
+</script>
+<style>
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header.top{display:flex; align-items:center; gap:11px; padding:8px 2px 20px}
+  /* The prototype nav puts a letter in a rounded brand square. The real mark is
+     a traced mustang whose mane is fine line-art -- in a 24px square it packed
+     down to a smudge, so the horse is the mark itself at a size that can carry
+     the detail, and the orange moves from the plate onto the glyph. */
+  .spark{
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    color:var(--brand);
+  }
+  /* A CSS mask rather than an <img>, so it takes currentColor -- and so it
+     inverts with the theme -- while staying a cached external file. */
+  .spark .glyph{
+    width:46px; height:32px; background:currentColor;
+    -webkit-mask:url(/static/images/logo-mark.svg) center/contain no-repeat;
+            mask:url(/static/images/logo-mark.svg) center/contain no-repeat;
+  }
+  .top .titles{flex:1; min-width:0}
+  .top h1{font-size:1.15rem; margin:0; font-weight:700; letter-spacing:-.02em}
+  .top .sub{color:var(--faint); font-size:.8rem; margin-top:2px; font-weight:500}
+  .dots{display:flex; gap:8px; justify-content:center; margin:6px 0 22px}
+  .dot{width:9px; height:9px; border-radius:50%; background:var(--line-strong)}
+  .dot.on{background:var(--brand)}
+  .card{
+    background:var(--card); border:1.5px solid var(--line); border-radius:var(--r-lg);
+    box-shadow:var(--shadow); padding:28px;
+  }
+  h2.q{font-family:var(--font-head); font-size:clamp(26px,4vw,36px); margin:.1em 0 .1em;
+    font-weight:800; letter-spacing:-.02em; line-height:1.12; text-wrap:balance}
+  p.lead{color:var(--mid); margin:.35em 0 1.5em; font-size:17px; line-height:1.6; text-wrap:pretty}
+  .choices{display:grid; gap:12px}
+  .choice{
+    display:flex; align-items:center; gap:14px; width:100%; text-align:left;
+    background:var(--card); border:1.5px solid var(--line); border-radius:var(--r-sm);
+    padding:17px 18px; cursor:pointer; font:inherit; color:inherit; transition:.15s;
+  }
+  .choice:hover{border-color:var(--brand); background:var(--surface-sunk); transform:translateY(-1px)}
+  /* Icon chip: brand tint behind a glyph, as on the prototype's step cards. */
+  .choice .emoji{
+    width:44px; height:44px; border-radius:12px; background:var(--warn-bg);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.35rem; flex-shrink:0;
+  }
+  .choice .t{font-family:var(--font-head); font-weight:700; font-size:1.05rem; letter-spacing:-.01em}
+  .choice .d{color:var(--mid); font-size:.88rem}
+  .choice .from{margin-left:auto; text-align:right; white-space:nowrap}
+  .choice .from b{font-family:var(--font-head); font-size:1.2rem; font-weight:800}
+  .choice .from span{display:block; color:var(--faint); font-size:.72rem; font-weight:500}
+  button.big{
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    background:var(--brand); color:#fff; border:0; border-radius:var(--r-sm);
+    padding:17px 26px; font-family:var(--font-body); font-weight:700; font-size:17px;
+    cursor:pointer; width:100%; transition:background .15s;
+    box-shadow:var(--shadow-brand);
+  }
+  button.big:hover{background:var(--brand-dark)}
+  .link{background:none; border:0; color:var(--brand); font:inherit; cursor:pointer; padding:8px; font-weight:700}
+  /* Verdict block — the prototype's results header: the answer on the left,
+     what you pay today on the right. */
+  .verdict{
+    border-radius:var(--r-md); padding:26px 30px; margin-bottom:14px;
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  }
+  .verdict.good{background:var(--good-bg)}
+  .verdict.flat{background:var(--surface-alt); border:1.5px solid var(--line)}
+  .verdict .vmain{flex:1; min-width:260px}
+  .vhead{
+    font-family:var(--font-head); font-size:clamp(21px,2.9vw,28px); font-weight:800;
+    letter-spacing:-.02em; line-height:1.2; margin:0 0 6px; text-wrap:balance;
+  }
+  .verdict.good .vhead{color:var(--good-dark)}
+  .verdict.good .vsub{color:var(--good)}
+  .verdict.flat .vhead{color:var(--ink)}
+  .verdict.flat .vsub{color:var(--mid)}
+  .vsub{margin:0; font-size:16px; font-weight:600}
+  .vnow{
+    text-align:center; background:var(--card); border-radius:16px; padding:16px 24px;
+    border:1.5px solid transparent;
+  }
+  .verdict.flat .vnow{border-color:var(--line)}
+  .vamt{
+    font-family:var(--font-head); font-weight:800; font-size:26px; color:var(--ink);
+    font-variant-numeric:tabular-nums; line-height:1.15;
+  }
+  .vamt span{font-size:14px; color:var(--faint); font-weight:600}
+  .curbanner{
+    background:var(--surface-alt); border:1.5px solid var(--line); border-radius:var(--r-sm);
+    padding:13px 17px; margin-bottom:18px; font-size:.88rem; color:var(--mid); line-height:1.55;
+  }
+  .curbanner b{color:var(--ink)}
+  /* Roomy: each card's badge hangs 12px above it, so a tight gap makes the
+     badge read as attached to the card above rather than its own. */
+  .rank{display:flex; flex-direction:column; gap:26px; margin-top:22px}
+  .plan{
+    background:var(--card); border:1.5px solid var(--line); border-radius:var(--r-md); padding:26px 28px;
+    position:relative;
+  }
+  /* The prototype gives its top pick the brand colour, not the savings green:
+     orange means "we picked this", green stays reserved for money saved. */
+  .plan.best{border:2px solid var(--brand); box-shadow:var(--shadow-card)}
+  .badge{
+    position:absolute; top:-12px; left:26px; background:var(--brand); color:#fff;
+    font-size:12.5px; font-weight:700; letter-spacing:.03em; padding:5px 14px;
+    border-radius:var(--r-pill); text-transform:uppercase;
+  }
+  .plan.n2 .badge, .plan.n3 .badge{background:var(--faint)}
+  .plan .prov{color:var(--mid); font-size:.85rem; font-weight:700}
+  .plan .prov .owner{font-weight:500; color:var(--faint); text-transform:none}
+  .plan .prov .owner::before{content:"·"; margin:0 6px}
+  /* Contract-length picker */
+  .termpick{margin:0 0 18px}
+  .termlab{display:block; color:var(--faint); font-size:12.5px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.08em; margin-bottom:9px}
+  .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .chip{display:flex; flex-direction:column; align-items:flex-start; gap:1px;
+    background:var(--card); color:var(--ink); border:1.5px solid var(--line);
+    border-radius:var(--r-xs); padding:8px 14px; font-family:var(--font-body); font-size:.88rem;
+    font-weight:700; cursor:pointer; text-align:left; transition:.15s}
+  .chip .chipsub{font-weight:400; font-size:.74rem; color:var(--mid)}
+  .chip:hover:not(:disabled){border-color:var(--brand)}
+  .chip.on{border-color:var(--brand); background:var(--brand); color:#fff}
+  .chip.on .chipsub{color:#fff; opacity:.85}
+  .chip:disabled{opacity:.4; cursor:not-allowed}
+  /* Same-parent-company disclosure */
+  /* Neutral fill, brand on the edge. A full-width orange wash reads as a brown
+     field; a 3px accent says the same thing without staining the panel, and it
+     keeps this louder than the plain grey note above it. */
+  .famwarn{background:var(--notice-bg); border:1.5px solid var(--line);
+    border-left:3px solid var(--brand);
+    border-radius:var(--r-sm); padding:14px 17px 14px 15px; margin-bottom:14px;
+    font-size:.92rem; line-height:1.55}
+  .famwarn .famnote{display:block; color:var(--mid); font-size:.84rem; margin-top:5px}
+  .famwarn .famsrc{display:inline-block; margin-top:5px; font-size:.78rem; color:var(--faint)}
+  .plan .name{font-family:var(--font-head); font-weight:700; font-size:1.2rem;
+    margin:2px 0 10px; letter-spacing:-.01em}
+  .price{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+  .price .amt{font-family:var(--font-head); font-size:2.2rem; font-weight:800;
+    letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+  .price .per{color:var(--mid); font-size:.9rem}
+  /* The all-in rate, directly comparable to the ¢/kWh in the bill banner. */
+  .price .rate{color:var(--ink); font-size:.88rem; font-weight:700;
+    background:var(--surface-sunk); border:1.5px solid var(--line);
+    border-radius:var(--r-pill); padding:3px 11px; font-variant-numeric:tabular-nums}
+  .save{display:inline-block; background:var(--good-bg); color:var(--good);
+    font-family:var(--font-head); font-weight:700;
+    font-size:.92rem; padding:5px 13px; border-radius:var(--r-pill); margin-top:10px}
+  .tot{color:var(--mid); font-size:.85rem; margin-top:8px}
+  .meta{display:flex; gap:16px; flex-wrap:wrap; color:var(--mid); font-size:.85rem; margin-top:13px}
+  .meta .leaf{color:var(--good); font-weight:700}
+  .be{margin-top:13px; padding:12px 15px; background:var(--surface-sunk); border-radius:var(--r-xs);
+    font-size:.89rem; border:1.5px solid var(--line); line-height:1.55}
+  .plan .act{margin-top:18px; display:flex; flex-direction:column; align-items:center; gap:9px}
+  /* The EFL is the boring, important document. Always reachable, never the
+     thing competing with the button. */
+  .plan .act .actsub{
+    color:var(--mid); font-size:.82rem; font-weight:600; text-decoration:none;
+    background:none; border:0; padding:0; width:auto;
+  }
+  .plan .act .actsub:hover{color:var(--brand); text-decoration:underline; background:none}
+  .plan .act a{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--brand); color:#fff; text-decoration:none; font-weight:700; font-size:15.5px;
+    border-radius:var(--r-xs); padding:14px 22px; width:100%; transition:background .15s;
+  }
+  .plan .act a:hover{background:var(--brand-dark); text-decoration:none}
+  /* Secondary treatment for the runners-up, as in the prototype: only the top
+     pick gets a filled button, so the eye lands on one thing. */
+  .plan.n2 .act a, .plan.n3 .act a{
+    background:var(--card); color:var(--ink); border:1.5px solid var(--line-strong);
+  }
+  .plan.n2 .act a:hover, .plan.n3 .act a:hover{background:var(--surface-sunk); border-color:var(--ink)}
+  .foot{text-align:center; color:var(--faint); font-size:.79rem; margin-top:32px; line-height:1.6}
+  .foot p{margin:16px auto 0; max-width:52ch}
+  /* Subtle by intent: the table is for people who already know what they're
+     looking at. Present, not competing with the wizard. */
+  .foot .tablelink{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--card); color:var(--mid); text-decoration:none;
+    border:1.5px solid var(--line); border-radius:var(--r-pill);
+    padding:9px 18px; font-size:.85rem; font-weight:700; transition:.15s;
+  }
+  .foot .tablelink:hover{border-color:var(--brand); color:var(--brand); text-decoration:none}
+  .navrow{display:flex; justify-content:space-between; align-items:center; margin-top:18px}
+  .field{margin:0 0 18px}
+  .field label{display:block; font-weight:700; margin-bottom:7px; font-size:.95rem}
+  .field .hint{color:var(--mid); font-weight:400; font-size:.82rem}
+  .inrow{display:flex; align-items:center; gap:10px}
+  .inrow input{
+    flex:1; min-width:0; font-family:var(--font-body); font-size:16px; padding:13px 14px;
+    border:1.5px solid var(--line-strong); border-radius:var(--r-xs);
+    background:var(--card); color:var(--ink);
+  }
+  .inrow input:focus{outline:none; border-color:var(--brand)}
+  .inrow .unit{color:var(--mid); font-weight:600; white-space:nowrap}
+  .err{color:var(--warn); font-size:.88rem; margin:2px 0 12px; min-height:1.1em}
+  .optional{border-top:1.5px solid var(--line); margin:24px 0 18px; padding-top:20px}
+  .optional .why{color:var(--mid); font-size:.88rem; margin:0 0 16px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="spark" aria-hidden="true"><span class="glyph"></span></span>
+    <div class="titles">
+      <h1>Find your cheaper electricity plan</h1>
+      <div class="sub" id="subline"></div>
+    </div>
+    <!-- Label and pressed-state are set by setTheme() in wizard.js, so a
+         screen reader hears which of the three modes is active. -->
+    <button class="themetoggle" id="themeToggle" type="button" title="Theme">
+      <!-- Auto: half-filled circle — following the system. -->
+      <svg class="i-auto" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 3a9 9 0 0 1 0 18V3z" fill="currentColor"/>
+      </svg>
+      <!-- Light: sun. -->
+      <svg class="i-light" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2" fill="currentColor"/>
+        <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2"/>
+          <path d="M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/>
+        </g>
+      </svg>
+      <!-- Dark: crescent. -->
+      <svg class="i-dark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"
+              fill="currentColor"/>
+      </svg>
+    </button>
+  </header>
+  <div class="dots"><span class="dot on" id="d0"></span><span class="dot" id="d1"></span><span class="dot" id="d2"></span></div>
+  <div id="app"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<script src="/static/wizard.js"></script>
+</body>
+</html>

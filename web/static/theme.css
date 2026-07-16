@@ -1,0 +1,308 @@
+/* ===========================================================================
+   Design tokens — the Mustang look.
+   Adapted from the Mustang.dc.html prototype (web/.tmp/html.zip).
+
+   Everything visual lives here: colour, type, radius, shadow. Pages should
+   reach for these variables rather than literals, so a palette change is one
+   file rather than a hunt.
+
+   The prototype is light-only. A dark scheme is derived below from the same
+   hues, because the app already honoured prefers-color-scheme and taking that
+   away to match a mockup would be a regression for anyone who set it.
+   =========================================================================== */
+
+/* --- Type ---------------------------------------------------------------
+   Self-hosted rather than linked from fonts.googleapis.com. The prototype
+   links Google; doing that here would send every visitor's IP to a third
+   party to render a page that otherwise phones nobody, and would break the
+   site offline. Latin subset only, 170 KB in total.
+   ------------------------------------------------------------------------ */
+@font-face{font-family:'Sora';font-style:normal;font-weight:400;font-display:swap;
+  src:url('/static/fonts/sora-400.woff2') format('woff2')}
+@font-face{font-family:'Sora';font-style:normal;font-weight:600;font-display:swap;
+  src:url('/static/fonts/sora-600.woff2') format('woff2')}
+@font-face{font-family:'Sora';font-style:normal;font-weight:700;font-display:swap;
+  src:url('/static/fonts/sora-700.woff2') format('woff2')}
+@font-face{font-family:'Sora';font-style:normal;font-weight:800;font-display:swap;
+  src:url('/static/fonts/sora-800.woff2') format('woff2')}
+@font-face{font-family:'Karla';font-style:normal;font-weight:400;font-display:swap;
+  src:url('/static/fonts/karla-400.woff2') format('woff2')}
+@font-face{font-family:'Karla';font-style:normal;font-weight:500;font-display:swap;
+  src:url('/static/fonts/karla-500.woff2') format('woff2')}
+@font-face{font-family:'Karla';font-style:normal;font-weight:700;font-display:swap;
+  src:url('/static/fonts/karla-700.woff2') format('woff2')}
+
+:root{
+  /* Sora carries headings and numbers: geometric, tight, confident.
+     Karla carries prose: humanist, warm, easy at 15-19px. */
+  --font-head:'Sora', ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body:'Karla', ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Surfaces — warm off-whites, not blue-greys. This is what makes the
+     palette feel domestic rather than fintech. */
+  --bg:#FDFDFB;
+  --card:#FFFFFF;
+  --surface-alt:#F7F5F0;    /* full-width bands that break up the page */
+  --surface-sunk:#FBFAF7;   /* rows inset within a card */
+
+  /* Text */
+  --ink:#20242B;
+  --mid:#5A6070;
+  --faint:#9CA1AD;          /* eyebrows, captions, disabled */
+
+  /* Lines */
+  --line:#EEECE6;
+  --line-strong:#E2E0DB;    /* input borders, secondary buttons */
+  --line-dashed:#D9CFC0;    /* dropzones */
+
+  /* Brand */
+  --brand:#D96E1E;
+  --brand-dark:#B65812;
+  --brand-ink:#FFFFFF;
+  --warn:#B65812;
+  --warn-bg:#FBF1E7;        /* brand tint: badges and icon chips — small areas */
+  /* Notices are a neutral lift, not a brand wash. Over a *small* area (a 44px
+     icon chip) the orange tint reads as warmth; stretched across a full-width
+     panel it reads as a brown field, and no amount of tuning fixes that. Big
+     surfaces stay neutral and let a border carry the brand. */
+  --notice-bg:#F7F5F0;
+
+  /* Positive — savings, confirmations, green plans */
+  --good:#2E7D4F;
+  --good-dark:#1D5236;
+  --good-bg:#E7F3EC;
+
+  /* Inverted panels (CTA blocks, footers) */
+  --dark:#20242B;
+  --on-dark:#FFFFFF;
+  --on-dark-mid:#B8BCC6;
+
+  /* Categorical — avatars, provider marks. Never for meaning. */
+  --cat-blue:#4A6FA5;
+  --cat-gold:#B08A3E;
+
+  /* Radius: pill for badges/nav, 20-24px cards, 12-14px controls. */
+  --r-pill:999px;
+  --r-lg:24px;
+  --r-md:20px;
+  --r-sm:14px;
+  --r-xs:11px;
+
+  /* Shadow: broad and soft, never a hard drop. */
+  --shadow:0 20px 50px rgba(32,36,43,.07);
+  --shadow-brand:0 4px 14px rgba(217,110,30,.30);
+  --shadow-card:0 8px 24px rgba(217,110,30,.12);
+}
+
+/* --- Dark ---------------------------------------------------------------
+   The dark palette. Declared once, here, and inert until mapped onto the live
+   token names below — so every value has exactly one home. The mapping is
+   applied twice because dark has two triggers:
+
+     1. the OS asks for dark and the reader hasn't overridden it
+     2. the reader explicitly chose dark via the header toggle
+
+   Light is the designed default, so [data-theme="light"] must beat the media
+   query: an explicit choice outranks the OS in both directions.
+   ------------------------------------------------------------------------ */
+:root{
+  /* Surfaces are WARM, exactly as in light. This is the whole palette's spine:
+     warm surfaces, warm lines, cool-grey text. Break it and the brand orange
+     has nothing to sit on.
+
+     An earlier pass built these from the prototype's #20242B. That colour is a
+     small accent panel *inside* a warm page, not a surface system -- promoting
+     it to the page background made every dark surface blue-grey (R-B about -11)
+     while the brand tint over it composited warm (+12). Warm on cool: it read
+     as a mud-brown box dropped on a fintech-grey page. The tint was never the
+     problem.
+
+     Measure before changing these. R-B (red minus blue) should stay positive
+     and roughly track light's: --bg +2, --surface-alt +7, --line +8. */
+  --d-bg:#1A1816;             /* R-B +4  */
+  --d-card:#24211D;           /* R-B +7  */
+  --d-surface-alt:#1F1D19;    /* R-B +6  */
+  --d-surface-sunk:#2C2823;   /* R-B +9  */
+
+  --d-ink:#F4F2ED;            /* warm white — a blue-white fights the orange */
+  /* Text stays cool-grey against the warm surfaces, mirroring light, where
+     --mid (#5A6070) and --faint (#9CA1AD) are both blue-leaning. That warm/cool
+     tension is the prototype's, not an accident. */
+  --d-mid:#A6ABB4;
+  --d-faint:#797E88;
+
+  --d-line:#34302A;           /* R-B +10 */
+  --d-line-strong:#443F37;    /* R-B +13 */
+  --d-line-dashed:#4A4237;
+
+  /* Lifted: #D96E1E on a dark ground goes muddy and fails contrast. */
+  --d-brand:#E8853C;
+  --d-brand-dark:#D96E1E;
+  --d-warn:#E8853C;
+
+  /* Tints are the brand at low alpha over whatever sits behind, NOT a hex
+     darkened off the light tint. Darkening #FBF1E7 produced #2C2117 —
+     saturated enough to read brown, dark enough to read mud. Alpha keeps a
+     notice harmonised with its surface at any depth, but only once that
+     surface is warm: over the old blue-grey card this composited to a clashing
+     #38302D. Over the warm card it lands +20 warmer than its surface, the same
+     step --warn-bg takes from --card in light. */
+  --d-warn-bg:rgba(232,133,60,.12);
+  /* White at low alpha: a neutral lift off whatever it sits on, in the one
+     direction that always reads as "raised" on a dark ground. */
+  --d-notice-bg:rgba(255,255,255,.055);
+
+  --d-good:#4FB380;
+  --d-good-dark:#8FD9B4;
+  --d-good-bg:rgba(79,179,128,.13);
+
+  --d-dark:#100E0C;           /* warm near-black for inverted panels */
+  --d-on-dark-mid:#A6A099;
+
+  --d-cat-blue:#6A8FC5;
+  --d-cat-gold:#C9A455;
+
+  --d-shadow:0 20px 50px rgba(0,0,0,.45);
+  --d-shadow-brand:0 4px 14px rgba(217,110,30,.28);
+  --d-shadow-card:0 8px 24px rgba(0,0,0,.35);
+}
+
+/* The mapping. Keep these two lists identical — only the selector differs. */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:var(--d-bg); --card:var(--d-card);
+    --surface-alt:var(--d-surface-alt); --surface-sunk:var(--d-surface-sunk);
+    --ink:var(--d-ink); --mid:var(--d-mid); --faint:var(--d-faint);
+    --line:var(--d-line); --line-strong:var(--d-line-strong); --line-dashed:var(--d-line-dashed);
+    --brand:var(--d-brand); --brand-dark:var(--d-brand-dark);
+    --warn:var(--d-warn); --warn-bg:var(--d-warn-bg); --notice-bg:var(--d-notice-bg);
+    --good:var(--d-good); --good-dark:var(--d-good-dark); --good-bg:var(--d-good-bg);
+    --dark:var(--d-dark); --on-dark-mid:var(--d-on-dark-mid);
+    --cat-blue:var(--d-cat-blue); --cat-gold:var(--d-cat-gold);
+    --shadow:var(--d-shadow); --shadow-brand:var(--d-shadow-brand); --shadow-card:var(--d-shadow-card);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:var(--d-bg); --card:var(--d-card);
+  --surface-alt:var(--d-surface-alt); --surface-sunk:var(--d-surface-sunk);
+  --ink:var(--d-ink); --mid:var(--d-mid); --faint:var(--d-faint);
+  --line:var(--d-line); --line-strong:var(--d-line-strong); --line-dashed:var(--d-line-dashed);
+  --brand:var(--d-brand); --brand-dark:var(--d-brand-dark);
+  --warn:var(--d-warn); --warn-bg:var(--d-warn-bg); --notice-bg:var(--d-notice-bg);
+  --good:var(--d-good); --good-dark:var(--d-good-dark); --good-bg:var(--d-good-bg);
+  --dark:var(--d-dark); --on-dark-mid:var(--d-on-dark-mid);
+  --cat-blue:var(--d-cat-blue); --cat-gold:var(--d-cat-gold);
+  --shadow:var(--d-shadow); --shadow-brand:var(--d-shadow-brand); --shadow-card:var(--d-shadow-card);
+  color-scheme:dark;
+}
+:root[data-theme="light"]{ color-scheme:light }
+
+/* --- Base --------------------------------------------------------------- */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); line-height:1.5;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+h1,h2,h3,h4{font-family:var(--font-head); font-weight:800; letter-spacing:-.02em; margin:0}
+h1{font-size:clamp(30px,5vw,54px); line-height:1.08; letter-spacing:-.03em; text-wrap:balance}
+h2{font-size:clamp(24px,3.4vw,34px)}
+h3{font-size:19px; font-weight:700}
+p{margin:0; text-wrap:pretty}
+a{color:var(--brand); text-decoration:none}
+a:hover{color:var(--brand-dark); text-decoration:underline}
+strong{color:var(--ink)}
+
+/* Numbers read as data, not prose: tabular so columns line up and a changing
+   figure doesn't shuffle its neighbours. */
+.num{font-family:var(--font-head); font-weight:800; font-variant-numeric:tabular-nums}
+
+/* --- Shared components -------------------------------------------------- */
+
+/* Eyebrow: the small uppercase label above a block. */
+.eyebrow{
+  font-size:12.5px; font-weight:700; color:var(--faint);
+  text-transform:uppercase; letter-spacing:.08em;
+}
+
+/* Pill badge, brand-tinted. */
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--warn-bg); color:var(--warn);
+  border-radius:var(--r-pill); padding:6px 14px;
+  font-size:13.5px; font-weight:700;
+}
+.pill.good{background:var(--good-bg); color:var(--good)}
+
+/* Buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  font-family:var(--font-body); font-size:17px; font-weight:700;
+  border:none; border-radius:var(--r-sm); padding:17px 30px;
+  cursor:pointer; transition:background .15s, border-color .15s, filter .15s;
+}
+.btn-primary{background:var(--brand); color:#fff; box-shadow:var(--shadow-brand)}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-secondary{
+  background:transparent; color:var(--ink);
+  border:1.5px solid var(--line-strong); padding:16px 24px;
+}
+.btn-secondary:hover{border-color:var(--ink)}
+.btn-dark{background:var(--dark); color:#fff; border-radius:var(--r-pill); padding:10px 20px; font-size:15px}
+.btn-dark:hover{filter:brightness(1.35)}
+
+/* Card */
+.panel{
+  background:var(--card); border:1.5px solid var(--line);
+  border-radius:var(--r-lg); padding:28px;
+}
+.panel-raised{box-shadow:var(--shadow)}
+
+/* Inputs */
+.input{
+  width:100%; font-family:var(--font-body); font-size:16px;
+  border:1.5px solid var(--line-strong); border-radius:var(--r-xs);
+  padding:13px 14px; background:var(--card); color:var(--ink); outline:none;
+}
+.input:focus{border-color:var(--brand)}
+
+/* Progress rail: "Your bill — Compare — Your deals" */
+.rail{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  font-size:14px; color:var(--faint); font-weight:600;
+}
+.rail .on{color:var(--brand)}
+
+/* --- Theme toggle -------------------------------------------------------
+   Cycles Auto → Light → Dark. Auto is the resting state: the page follows the
+   OS until someone says otherwise, and "otherwise" is then remembered.
+   ------------------------------------------------------------------------ */
+.themetoggle{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:36px; height:36px; flex-shrink:0;
+  background:var(--card); color:var(--mid);
+  border:1.5px solid var(--line); border-radius:var(--r-pill);
+  cursor:pointer; padding:0; transition:.15s;
+}
+.themetoggle:hover{border-color:var(--brand); color:var(--brand)}
+.themetoggle:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+.themetoggle svg{width:18px; height:18px; display:block}
+/* One icon shows at a time; which one is driven by the root's data-theme.
+   Auto shows the half-filled glyph, so "following your system" is a visible
+   state rather than something you infer from the colours. */
+.themetoggle .i-auto{display:block}
+.themetoggle .i-light,.themetoggle .i-dark{display:none}
+:root[data-theme="light"] .themetoggle .i-auto{display:none}
+:root[data-theme="light"] .themetoggle .i-light{display:block}
+:root[data-theme="dark"]  .themetoggle .i-auto{display:none}
+:root[data-theme="dark"]  .themetoggle .i-dark{display:block}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important}
+}
